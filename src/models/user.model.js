@@ -72,8 +72,8 @@ userSchema.methoods.isPasswordCorrect = async function(password){
 userSchema.methods.generateAccessToken = async function(){
   return  await jwt.sign(
         {
-            id:this.id
-            email:this.email
+            id:this.id,
+            email:this.email,
             username:this.userName,
             fullName:this.fullName
         },
@@ -88,8 +88,8 @@ userSchema.methods.generateAccessToken = async function(){
 
     return  await jwt.sign(
         {
-            id:this.id
-            email:this.email
+            id:this.id,
+            email:this.email,
             username:this.userName,
             fullName:this.fullName
         },
