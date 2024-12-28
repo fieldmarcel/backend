@@ -4,7 +4,7 @@
         statusCode,
         message="something went wrong",
         error =[],
-        statck=""
+        stack=""
     ){
         super(message)
         this.statusCode= statusCode
@@ -13,7 +13,7 @@
         this.success= false
         this.errors= this.errors
         if(stack){
-            this.stack= statck
+            this.stack= stack
             
         }
         else{
