@@ -64,7 +64,7 @@ userSchema.pre("save", async function (next) {//pre middleware runs before a doc
     
 })
 
-userSchema.methoods.isPasswordCorrect = async function(password){
+userSchema.methods.isPasswordCorrect = async function(password){
    return await bcrypt.compare(password, this.password)
 }
 

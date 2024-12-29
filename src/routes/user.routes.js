@@ -1,11 +1,24 @@
-import {Router} from "express";
+import { Router } from "express";
 import { registerUser } from "../controllers/user.controller.js"; // Adjust the path as needed
+import { upload } from "../middlewares/multer.middleware.js";
 
+const router = Router();
+router.route("/register").post(
+  upload.fields([//this upload.field from multer is used for handling to post/get the files on server
+    {
+      name: "avatar",
+      maxCount: 1,
+    },
 
-const router =Router()
-router.route("/register").post(registerUser)
+    {
+      name: "coverImage",
+      maxCount: 1,
+    },
+  ]),
+  registerUser//this is for data handling only
+);
 export default router;
- // This connects the handler to the /register route
+// This connects the handler to the /register route
 // Purpose:
 // app.post() is used to define a route specifically for handling HTTP POST requests.
 
@@ -19,4 +32,3 @@ export default router;
 // The server matches the route /users with app.use("/users", userRouter).
 // Inside userRouter, it matches /register with router.route("/register").
 // The POST handler (registerUser) is called to process the request.
-
