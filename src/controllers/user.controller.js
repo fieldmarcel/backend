@@ -31,27 +31,27 @@ console.log("req body",req.body);
 // Use return for small, simple projects where centralized error handling isn't needed.
 
 //for validation 
-// if(fullName===""){
-// throw new ApiError(400,"fullname is required")
+if(fullName===""){
+throw new ApiError(400,"fullname is required")
+}
+// else if(fullName ===""){
+//   return res.status(400).json({message:"fullname is required"})
 // }
-// // else if(fullName ===""){
-// //   return res.status(400).json({message:"fullname is required"})
-// // }
-// else if(userName===""){
-//   throw new ApiError(400,"username is required")
-//   }
-//   else if(email===""){
-//     throw new ApiError(400,"email is required")
-//     }
-//     else if (password===""){
-//       throw new ApiError(400,"password is required")
-//       }
+else if(userName===""){
+  throw new ApiError(400,"username is required")
+  }
+  else if(email===""){
+    throw new ApiError(400,"email is required")
+    }
+    else if (password===""){
+      throw new ApiError(400,"password is required")
+      }
 // we check for @ nos in email also
-if([fullName, email,userName,password].some((field)=>
-  field?.trim()===""))
-   {
-     throw new ApiError(400,"all field are compulsory")
-   }
+// if([fullName, email,userName,password].some((field)=>
+//   field?.trim()===""))
+//    {
+//      throw new ApiError(400,"all field are compulsory")
+//    }
    
 console.log("username",userName)
 
@@ -59,7 +59,7 @@ console.log("username",userName)
 //so here we importing User from user,model.js as it is
 //  connected to mongoDB database so wewill find it apply the condition 
 
-const existedUser =  User.findOne({
+const existedUser = await User.findOne({
 
   $or:[{userName},{email}]
 
@@ -72,24 +72,49 @@ if(existedUser){
 //using cloudinary
 // req.files?.avatar[0]?.path
 
+// Handle avatar and cover image uploads
+// req.files is typically an object, where each key represents the field 
+// name (as specified in the form)
+//  and the value is an array of file objects.
+console.log('req.files:', req.files);
 
-const avatarLocalPath = req.files?.avatar[0]?.path;
+const avatarLocalPath = req.files?.avatar?.[0]?.path;
+
 const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
-if(!avatarLocalPath){
-  throw new ApiError(400,"avatar file is required");
+if (!avatarLocalPath) {
+  console.error('Avatar file missing. req.files:', req.files);
+  throw new ApiError(400, "Avatar file is required");
 }
-const avatar =await uploadOnCloudinary(avatarLocalPath)
+// avatar?.[0]?.path:
+// ?->  called optional chaining
+// avatar is expected to be an array of file objects (e.g., [file1, file2, ...]).
+// [0] accesses the first file object in the array.
+// ?.path retrieves the path property of that file object (the local path where the file is temporarily stored).
+// const avatarLocalPath = req.files?.avatar?.[0]?.path;:
+
+// If req.files exists and contains a field avatar, and if avatar is an array with at least one file, this retrieves the local path of the first uploaded avatar file.
+// If any of these conditions are not met, avatarLocalPath is assigned undefined.
+// const coverImageLocalPath = req.files?.coverImage?.[0]?.path;:
+
+// Similarly, this retrieves the local path for the first uploaded coverImage file if it exists. If not, coverImageLocalPath is undefined.
+//Upload images to Cloudinary
 const coverImage= await uploadOnCloudinary(coverImageLocalPath);
-if(!avatar){
-  throw new ApiError(400,"Avatar is compulsory")
-}
+
+const avatar = await uploadOnCloudinary(avatarLocalPath).catch((err) => {
+  console.error('Cloudinary upload error:', err);
+  throw new ApiError(500, "Failed to upload avatar");
+});
+
+console.log("avatar url ",avatar.url?.url)
+console.log("Cover Image URL:", coverImage?.url ); 
+ // Ensure cover image URL is correctly logged
 
 //now creating object and make entryin database using User
 
 const user = await User.create({
 fullName,
-avatar:avatar.url,
+avatar:avatar.url ,           
 coverImage:coverImage?.url || "" ,
  //corner case :if user providied cverimage then great otherwise no eror will be there ,no problem
 password,
@@ -99,22 +124,18 @@ userName:userName.toLowerCase()
 })
 
 //another to check whether user created or not or field is empty 
-User.findById(user._id).select("-password -refreshToken")
+const createdUser= await User.findById(user._id).select("-password -refreshToken")
 
-if(!createdUSer){
+if(!createdUser){
   throw new ApiError(500,"something went wrong while registration of user")
 }
 
 // now return response from server
 return res.status(201).json(
-
-
-new ApiResponse(200, createdUSer,"User registered successfully")
+new ApiResponse(200, createdUser,"User registered successfully")
 
 )
 })
 
 
 export { registerUser };
-
-// another method  //in place of it map can also  be used

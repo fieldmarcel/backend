@@ -4,10 +4,11 @@ import fs from "fs"  //filesystem
 
     // Configuration
     cloudinary.config({ 
-        cloud_name: process.env.CLOUDINARY_CLOUDNAME, 
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
         api_key:process.env.CLOUDINARY_API_KEY, 
         // api_secret: '<your_api_secret>' 
-    api_secret:process.env.CLOUDINARY_API_SECRET
+    api_secret:process.env.CLOUDINARY_API_SECRET,
+    secure:true,
     });
     // By using process.env, you decouple your code 
     // from the specific environment variables 
@@ -23,15 +24,17 @@ const uploadOnCloudinary = async (localFilePath)=>{
             return null;
         }  //if dont want to wruite RETURN NULL JUZZ REMOVEE ! AND ADD A
         //   BRACKET FOR UTSIDE..CHECK BELOW CODE 
-        cloudinary.uploader.upload(localFilePath,{
-            resource_type:"auto"
+     const response=  await cloudinary.uploader.upload(localFilePath,{
+            resource_type:"auto",
         })
-        console.log("file is uploaded on cloudinary",response.url);
+        // console.log("file is uploaded on cloudinary",response.url);
+        fs.unlinkSync(localFilePath)
         return response;
         
     } catch (error) {
         fs.unlinkSync(localFilePath)
-        return null;
+        console.error("Cloudinary upload failed:", error);
+        throw new Error("Cloudinary upload failed")
         //remove the locallly saved temporary 
         // files as the uploading failed 
     }
