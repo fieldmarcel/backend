@@ -1,7 +1,8 @@
 import { Router } from "express";
-import { registerUser } from "../controllers/user.controller.js"; // Adjust the path as needed
+import { logoutUser,loginUser, registerUser } from "../controllers/user.controller.js"; // Adjust the path as needed
 import { upload } from "../middlewares/multer.middleware.js";
 
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router = Router();
 router.route("/register").post(
   upload.fields([//this upload.field from multer is used for handling to post/get the files on server
@@ -17,6 +18,18 @@ router.route("/register").post(
   ]),
   registerUser//this is for data handling only
 );
+
+router.route("/login").post(loginUser)
+
+
+
+//secured routes
+
+router.route("/logout").post(verifyJWT, logoutUser);
+
+
+
+
 export default router;
 // This connects the handler to the /register route
 // Purpose:
