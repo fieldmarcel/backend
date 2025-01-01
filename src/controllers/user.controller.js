@@ -270,10 +270,60 @@ const logoutUser= asyncHandler( async(req , res)=>{
 
 
 
+const refreshAccessToken= asyncHandler(async(req,res)=>{
+
+
+const incomingRefreshToken= req.cookies.refreshToken || req.body.refreshToken
+
+if(!incomingRefreshToken){
+  throw new ApiError(401,"unauthorised request")
+}
+// now verifying incoming token request we need encrypted password from database
+
+const decodedToken = jwt.verify(
+  incomingRefreshToken,process.env.REFRESH_TOKEN
+)
+
+
+const user = await User.findById(decodedToken?._id)
+if(!user){
+  throw new ApiError(401,"Invalid Refresh token")
+}
+
+if(incomingRefreshToken !== user?.refreshToken){
+  throw new ApiError(401, " refresh token expired")
+
+}
+// before generaitng token send in cookies
+const options= {
+  httpOnly:true,
+  secure:true 
+}
+
+const {accessToken,newrefreshToken}=await generateAccessAndRefreshToken(user._id)
+return res
+.status(200)
+.cookie("accesstoken".accessToken,options)
+.cookie("refreshtoken",newrefreshToken ,options)
+.json(
+  new ApiResponse(
+    200,
+    {accessToken,refreshToken:newrefreshToken},"refresh token refreshed "
+
+    
+  )
+)
+
+
+
+
+})
 
 
 
 
 
 
-export { registerUser, loginUser ,logoutUser};
+
+
+export { registerUser, loginUser ,logoutUser,refreshAccessToken};
