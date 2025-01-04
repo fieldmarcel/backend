@@ -110,7 +110,7 @@ const registerUser = asyncHandler(async (req, res) => {
   // name (as specified in the form)
   //  and the value is an array of file objects.
   console.log("req.files:", req.files);
-
+//here we are taking mutiple files to its files and then making an array
   const avatarLocalPath = req.files?.avatar?.[0]?.path;
 
   const coverImageLocalPath = req.files?.coverImage[0]?.path;
@@ -275,9 +275,10 @@ const refreshAccessToken= asyncHandler(async(req,res)=>{
 
 const incomingRefreshToken= req.cookies.refreshToken || req.body.refreshToken
 
-if(!incomingRefreshToken){
+if(!incomingRefreshToken){ 
   throw new ApiError(401,"unauthorised request")
 }
+
 // now verifying incoming token request we need encrypted password from database
 
 const decodedToken = jwt.verify(
@@ -313,17 +314,141 @@ return res
     
   )
 )
+})
+
+//it will happen only if you have logged in 
+const changeCurrentPassword= asyncHandler(async(req,res)=>{
+
+const {oldPassword,newPassword}= req.body
+
+const user= await User.findById(req.user?._id) //from authmiddleware
+
+//checking wheter old password is correct or not 
+//from userschema
+const isPasswordCorrect= await user.isPasswordCorrect(oldPassword);
+
+if (!isPasswordCorrect) {
+throw new ApiError(400, "old password is incorrect")}
+
+
+ user.password = newPassword
+ await user.save({validatebeforeSave: false});
+
+ return res.status(200).json({message:"passsowrd saved successfully"})
+})
 
 
 
+const getCurrentUser= asyncHandler(async(req,res)=>{
+return res.status(200)
+.json(200,req.user,"current user fetched")
+})
 
+//for updation of files we should make another file 
+const updateAccountDetails= asyncHandler(async(req,res)=>{
+
+  if(!fullName || !email){
+    throw new ApiError(400, "all fields are required")
+  }
+  const user= User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set:{
+        fullName,
+        email:email
+      }
+    },{new:true}
+  ).select("-password")
+
+  return res
+  .status(200)
+  .json(new ApiResponse(200,user, "account details updated"))
+})
+
+
+//from multer 
+const updateAvatar= asyncHandler(async(req, res)=>{
+const avatarLocalPath=  req.file?.path
+if(!avatarLocalPath){
+  throw new ApiError(400 ,"avatar file is missing")
+}
+
+const updateUserAvatar = await uploadOnCloudinary(avatarLocalPath)
+
+if(!updateUserAvatar.url){
+  throw new ApiError(400 ,"error file uploading on avatar")
+
+}
+await  User.findByIdAndUpdate(
+  require.user?._id,
+  {
+$set:{//Updates the avatar field in the user'
+//  record with the url from the uploaded avatar.
+  avatar:avatar.url
+}
+  },
+  {new:true}  //Ensures the returned document is the updated one, not the original.
+).select("-password")
+
+return res
+  .status(200)
+  .json(new ApiResponse(200,user, "avatar  updated"))
 })
 
 
 
 
+// const updateUserCoverImage= asyncHandler(async(req,res)=>{
+
+//   const coverImageLocalPath= req.file?.path
+//   if(!coverImageLocalPath){
+//     throw new ApiError(400, "cover image is not there")
+//   }
+
+
+// })
+const updateUserCoverImage= asyncHandler(async(req, res)=>{
+  const coverImageLocalPath=  req.file?.path
+  if(!coverImageLocalPath){
+    throw new ApiError(400 ,"avatar file is missing")
+  }
+  
+  const updateCoverImage = await uploadOnCloudinary(avatarLocalPath)
+  
+  if(!updateCoverImage.url){
+    throw new ApiError(400 ,"error file uploading on avatar")
+  
+  }
+  await  User.findByIdAndUpdate(
+    require.user?._id,
+    {
+  $set:{//Updates the avatar field in the user'
+  //  record with the url from the uploaded avatar.
+    coverImage:coverImage.url
+  }
+  
+  
+  
+    },
+    {new:true}  //Ensures the returned document is the updated one, not the original.
+  ).select("-password")
+  
+
+  return res
+  .status(200)
+  .json(new ApiResponse(200,user, "cover image updated"))
+})
+
+  
 
 
 
 
-export { registerUser, loginUser ,logoutUser,refreshAccessToken};
+export { updateUserCoverImage,
+  updateAvatar,
+  updateAccountDetails,
+  registerUser, 
+  loginUser ,
+  logoutUser,
+  refreshAccessToken,
+  getCurrentUser};
