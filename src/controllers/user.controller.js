@@ -198,7 +198,7 @@ console.log("req body",req.body)
   // }
   //finding and validating either username or email in database
   const verifiedUser = await User.findOne({
-    $or: [{userName}, {email}]
+    $or: [{userName}]
 })
 
 console.log(verifiedUser)
