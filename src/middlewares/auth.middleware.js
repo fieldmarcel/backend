@@ -24,7 +24,7 @@ try {
 
     const decodedToken = await jwt.verify( token , process.env.ACCESS_TOKEN)
 
-    console.log("decode token is ",decodedToken);
+    console.log("decode token  is given as  ",decodedToken);
     
     const user =await User.findById(decodedToken?._id).select ("-refreshToken -password")
     
